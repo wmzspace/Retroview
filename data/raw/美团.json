@@ -1,0 +1,212 @@
+[
+  {
+    "category": "backend",
+    "question": "你前后端都有接触吗？在后端这一块有涉及哪些？",
+    "answer_points": [
+      "虾皮项目是前端同学一起写的 Node 后端仓库",
+      "快手内容营销平台前后端都有，也是 Node 的全栈项目",
+      "个人项目用过 Python Flask 和 SpringBoot 做后端"
+    ],
+    "quality": "good",
+    "quote": "整个行业应该是全站闭完了，然后你在后端的这一块有涉及吗"
+  },
+  {
+    "category": "backend",
+    "question": "简单介绍一下你做后端开发都做了哪些模块，是怎么实现的？",
+    "answer_points": [
+      "先用 MySQL 根据需求设计表，表没问题后建表再写接口",
+      "SpringBoot 分层：entity 对应数据库表、service 层写业务逻辑、还有一层直接写 SQL 语句",
+      "自己主要做数据库的增删查改",
+      "了解到 Redis 可做缓存，但个人实践中没有用到"
+    ],
+    "quality": "partial",
+    "quote": "那你简单介绍一下，就是你做后端的开发，然后都做了哪一些的模块，然后怎么去实现的"
+  },
+  {
+    "category": "backend",
+    "question": "Java 这块你是怎么学习的？看过哪些书？",
+    "answer_points": [
+      "跟着一本国外基础教材（中文版）把基础语法敲了一遍",
+      "在 B 站找 SpringBoot 快速入门视频课程，跟着学着做后端"
+    ],
+    "quality": "partial",
+    "quote": "那你学Java这块都看过哪一些书或者是怎么去学习的呀"
+  },
+  {
+    "category": "agent",
+    "question": "介绍你在前端 Agent 项目中设计上/架构上的考虑，如何覆盖所有功能与日常交互？",
+    "answer_points": [
+      "虾皮没有 Agent 基建，直接基于 LangChain 原始方式搭建；快手用万擎平台配置系统提示词、skill、知识库直接生成 API 供代码调用",
+      "虾皮设计：用户输入传给 LLM，中途调用查询 API、查询组件两个 tool，结果返回 LLM 分析生成 A2UI 结构给前端渲染",
+      "优化：在 API 查询 tool 里新建子 Agent，配置专属系统提示词和中间件，提升输出效率",
+      "提升准确率：修改 catalog.md 组件约束描述；系统提示词优先级更高，可写入加强约束；换更强模型（千问3→GPT→Claude Opus 后输出基本一次准确）",
+      "内容营销平台：写多风格创作 skill，建风格知识库，让模型按用户描述选风格生成文案；skill 约束输出格式（标题/正文/配图参考）",
+      "性能问题：并发调用七八次文生图接口会被限流，通过 on call 万擎平台提升每分钟调用次数指标"
+    ],
+    "quality": "good",
+    "quote": "你可以介绍一下……就是有你在设计上有哪些考虑，或者说在架构上有哪一些设计"
+  },
+  {
+    "category": "agent",
+    "question": "详细讲讲 A2UI 实现的是什么效果？SSE 情况下是怎么做的？",
+    "answer_points": [
+      "A2UI 返回组件树形式：root 根节点、props 属性、children 子节点",
+      "采用扁平化结构，一个节点只嵌套一层数组，能更快生成节点",
+      "SSE 下后端返回 chunk，前端按两个换行符分割，完整的 JSON 提取出来调用 render 函数渲染",
+      "被截断的部分放入 buffer，等下一个 chunk 到达后拼接再分割渲染",
+      "前端拿到 JSON 后用递归模式从根节点开始渲染子组件"
+    ],
+    "quality": "good",
+    "quote": "你能详细讲一下就实现了是一个什么样的效果吗？然后在SSE的情况下，你是怎么去做的"
+  },
+  {
+    "category": "agent",
+    "question": "SSE 流式传输中 JSON 被截断、丢失或重复，前端会发生什么？怎么保障最终 UI？",
+    "answer_points": [
+      "承认当时做项目没有考虑这个问题，主要保证项目跑通",
+      "事后了解：可以给 chunk 写 ID 记录发送位置以便续传",
+      "可以加心跳检测机制，定时前后端发信号检测连接是否断掉"
+    ],
+    "quality": "poor",
+    "quote": "那第三个或者丢了或者重复了。那你前端会发生什么，然后怎么保障最终的UI呢"
+  },
+  {
+    "category": "backend",
+    "question": "SSE 和 WebSocket 有什么区别？为什么选择 SSE？",
+    "answer_points": [
+      "SSE 是单向通信，只需后端向前端推送 A2UI 结构",
+      "WebSocket 是全双工双向通信，项目用不到",
+      "SSE 属于 HTTP 协议，WebSocket 是一种协议升级"
+    ],
+    "quality": "good",
+    "quote": "你们那个SD和websocket有什么区别啊？为什么选择SD"
+  },
+  {
+    "category": "project_scenario",
+    "question": "你说用两个换行符做分割符，具体是怎么处理的？用正则吗？",
+    "answer_points": [
+      "不用正则，前端接收到字符串后直接用 split 按两个换行符分割成数组",
+      "再把数组最后一个 pop 出来存到缓存（buffer）里等待拼接"
+    ],
+    "quality": "good",
+    "quote": "那你这个是怎么转移呢？就是怎么处理的呢？是用正则吗还是什么"
+  },
+  {
+    "category": "agent",
+    "question": "你借鉴了 LangChain 的一些设计，它比较大的特点或对你有参考意义的设计点是什么？",
+    "answer_points": [
+      "LLM 需要调用 tool 时会返回包含 tool 名字和调用方式的 JSON",
+      "Agent 调用 tool 得到结果后再把结果回传给 LLM 继续分析",
+      "有 middleware 中间件可以处理格式等",
+      "可以方便配置不同模型、调用 tool、搭建子 Agent"
+    ],
+    "quality": "partial",
+    "quote": "你觉得嗯，它比较大的特点是什么？或者对于你来说非常有参考意义的一些设计点是什么"
+  },
+  {
+    "category": "agent",
+    "question": "LangChain 在系统能力上有哪些设计？你看过 LangChain 的文档吗？",
+    "answer_points": [
+      "只了解整体和 LLM 对话、调用 tool 的原理",
+      "知道对话时会加载用户输入和 skill 到上下文，LLM 返回 tool 的 JSON 让 Agent 去调用",
+      "其他系统能力设计不了解，没看过 LangChain 文档",
+      "解释当时主要负系统提示词和 catalog.md，框架是其他同事搭的"
+    ],
+    "quality": "poor",
+    "quote": "就是在系统能力上，你了解long long Cha有哪一些，他们是怎么设计的，有了解过吗"
+  },
+  {
+    "category": "agent",
+    "question": "你负责 API catalog 的结构化定义工程落地，写 prompt 时有哪些考虑？",
+    "answer_points": [
+      "要实现具体功能时写详细明确的步骤（1、2、3 步骤式）让 AI 遵守",
+      "写负面例子，把之前犯过的错误写出来让它不要再犯",
+      "用 strong、hard 等强调性关键词强化某条提示词的约束"
+    ],
+    "quality": "good",
+    "quote": "你在写prompt里面会有哪些考虑呢"
+  },
+  {
+    "category": "agent",
+    "question": "场景题：基于一段文章总结核心要点并生成 PDF，这个 prompt 你会怎么写？",
+    "answer_points": [
+      "先明确输入（一篇文章）和输出（PDF 文件）",
+      "把步骤写清楚：先发文章、先整理核心段落、规定输出格式",
+      "给一个短篇文章输入及其 PDF 输出格式的参考示例",
+      "自己实验 prompt 时把输出不符合标准的问题记录下来写进 prompt 让它自纠",
+      "最终输出前加自检环节：检查指标是否完成、之前犯过的错误是否再犯，不通过就继续修改，通过才退出"
+    ],
+    "quality": "good",
+    "quote": "基于呃一段那个文章，让你总结出它的这一些……核心的这些要点……整理成一个PDF，你会怎么去做"
+  },
+  {
+    "category": "project_scenario",
+    "question": "A2UI 动态渲染的组件和协议是怎么建立联系的？更新组件时怎么做？",
+    "answer_points": [
+      "JSON 节点的 type 就是组件名称，前端有目录文件标记 name 与组件的一一对应关系",
+      "渲染时根据 type 在目录里找到组件并渲染，props 属性直接传给组件",
+      "自定义 actions 动作流数组（如先请求数据再更新表格），传给组件后用户点击时执行 onAction 函数",
+      "更新组件属性时：前端要改代码支持属性解析，后端 catalog.md 也要增加约束，两端都需要修改",
+      "曾想让 AI 根据组件库网站自定义生成属性直接渲染，但弱模型会编造 props 导致渲染失败，因此改为前后端提前约定好可接受的属性"
+    ],
+    "quality": "good",
+    "quote": "To UI的这个协议的动态渲染的这些组件，是和你的整个的协议是怎么建立联联系的"
+  },
+  {
+    "category": "project_scenario",
+    "question": "介绍你实现的 state 与 ref 同步/异步更新的读取链路（React 数据读取问题）",
+    "answer_points": [
+      "表格数据存在前端 data model 里，最初用 React useState 存储",
+      "问题：更新页码后立刻用新页码发请求，读到的仍是旧页码，因为 React 同一次渲染中 state 不会拿到最新值",
+      "解决方案：在上面加一层 useRef 存储，每次更新数据同时改 useState 和 useRef",
+      "访问数据时直接从 useRef.current 里获取最新数据再发请求"
+    ],
+    "quality": "good",
+    "quote": "实现了pad和代表get的同步异步更新的这个读取链路，这个你能详细的介绍一下"
+  },
+  {
+    "category": "project_scenario",
+    "question": "详细介绍快手通过 Figma 还原 UI 设计稿的 L3 全链路，以及如何保证还原度？",
+    "answer_points": [
+      "第一步：PRD 需求文档解析成多个小点（checklist）",
+      "第二步：将 PRD 与 Figma 建立一一对应关系，生成 HTML 报告直观展示矛盾之处",
+      "第三步：根据 PRD 分析需要开发的组件，检查代码仓库中是否已存在可复用，还是需新建；导航、模态框等特定组件在提示词中约束必须使用内部库",
+      "先让 AI 跑一遍代码用死数据把 UI 还原到 70% 左右，第二阶段再实现逻辑",
+      "UI loop skill 用 KSDT 调试工具（ksdt fiber 获取 RN 组件树），找到目标组件截图，与 Figma 对应组件截图叠加做像素 diff：分 16 个方格计算差异，找出差异最大的前 5 个方格指导修改",
+      "语义层对比：真机截图与 Figma 截图一起传给 AI 做语义判断，识别像素差异小但语义错误严重的问题（如数字 16 被截断成 10），并定级 low/medium/high",
+      "还有坐标计算（ksdt measure 获取组件精确坐标与 Figma 对比）",
+      "架构上有三个角色：一个调度方 + 检验子 Agent + 改代码子 Agent，检验不通过就让改代码 Agent 修改进入循环",
+      "退出有硬性打分指标：综合像素、SSIM、PRD 中提取的锚点是否实现等打分，通过后还原度可达 90% 多",
+      "逻辑还原：给技术方案文档（含接口及响应字段），先看 store 有没有对应、有就直接在 store 上改；先写一轮接口",
+      "根据 PRD 用 skill 生成 JSON 格式测试用例；用内部工具 Friday 操纵网页/手机端滑动、点击、截图，再调 Agent 判断页面是否出现期望画面",
+      "每个测试用例对应 JSON 里写好期望值数组，加载对应 mock 数据后截图逐条判断，没实现就循环修复"
+    ],
+    "quality": "good",
+    "quote": "你在快手做通过那个SC，通过那个飞飞格玛还原那些就是UI设计稿是吧，你能把这块儿的链路详细地介绍一下吗"
+  },
+  {
+    "category": "project_scenario",
+    "question": "这套 L3 机制是你一个人主导的吗？你在其中负责什么工作，遇到的挑战是什么？",
+    "answer_points": [
+      "不是一个人主导，是很多人一起开发，自己负责优化里面的几个 skill（共约 8 个），主要优化逻辑校验层",
+      "挑战一：Agent 乐观通过——不真调 Friday 工具、直接读代码就通过；优化 skill 要求每次调用后检查输出的 result 文件，确认真的调用了工具",
+      "挑战二：错误判断不准——mock 数据与渲染数据、预期数据不一致有多种情况（渲染与 mock 一致则代码没问题；与预期不一致可能是测试用例写错；mock 与渲染不一致则是代码写错），给 AI 写规则增强判断",
+      "挑战三：不同 Agent（内部 IDE myflicker、Claude Code、Codex）对 skill 的调用能力有差别，Friday 滑动截图有问题时加 ksdt capture 截图兜底，不能完全依赖单一工具",
+      "挑战四：测试用例生成不全——优化 skill 做到接近 100% 覆盖：生成用例时标明来源于 PRD 的需求编号和 ktest 平台的用例编号，防止 AI 幻觉编造用例；再遍历 PRD checklist 与 ktest 全部用例，做双向覆盖检查"
+    ],
+    "quality": "good",
+    "quote": "我跟你思说这嗯……你负责的工作，嗯，然后以及你遇到的挑战是什么呢"
+  },
+  {
+    "category": "algorithm",
+    "question": "编程题：将链表每 K 个节点一组进行反转",
+    "answer_points": [
+      "提出用递归方式：如 K=3 时先按三个一组分组，组内再用递归进行反转",
+      "也提到另一种方式：把整个链表存成数组形式，再划分再反转",
+      "认为链表递归是比較标准的做法",
+      "面试官表示大概了解思路后即结束，未完整写出代码"
+    ],
+    "quality": "partial",
+    "quote": "你可以看一下这个题啊，你可以用这va写，也可以用GS写……将论证每K个疾病进行反转"
+  }
+]

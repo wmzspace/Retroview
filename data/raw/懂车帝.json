@@ -1,0 +1,391 @@
+[
+  {
+    "category": "agent",
+    "question": "你们的 Agent 一般是 workflow 还是 ReAct 模式？会多轮对话吗？",
+    "answer_points": [
+      "快手有基建平台，可直接配置系统提示词、skill、知识库生成 API 调用",
+      "虾皮没有基建，是用 LangChain 搭的",
+      "内容营销平台的 Agent 支持多轮对话，前端调用平台 Agent 并返回信息"
+    ],
+    "quality": "partial",
+    "quote": "你们的Agent一般是workflow还是说就是react呢？"
+  },
+  {
+    "category": "agent",
+    "question": "Agent 由哪些部分组成？ReAct 模式一般是怎么实现的？",
+    "answer_points": [
+      "ReAct 是 reasoning + acting 的循环过程：用户输入传给 LLM，LLM 判断需调工具则返回 tool 调用信息",
+      "Agent 根据 tool name 和参数调用工具函数，把执行结果再返回给大模型继续推理，循环直到不再返回工具调用",
+      "Agent 组成包括：模型、系统提示词、工具、中间件（模型调用前后处理格式和约束）、子 Agent",
+      "还提到了 memory，分为短期记忆（最近几轮对话）和长期记忆（用户偏好）"
+    ],
+    "quality": "good",
+    "quote": "那一般Agent是由哪些部分组成啊？以及这个Agent里边这个react一般是怎么实现的呀？"
+  },
+  {
+    "category": "agent",
+    "question": "Agent 的短期记忆和长期记忆一般怎么存储？",
+    "answer_points": [
+      "坦诚当时项目里没有区分短期和长期记忆",
+      "实际只存了会话聊天记录和生成界面用的 USD 等数据"
+    ],
+    "quality": "partial",
+    "quote": "那短期跟长期你们一般怎么存储？"
+  },
+  {
+    "category": "agent",
+    "question": "如果 Agent 可调用的工具特别多（比如 100 个）该怎么处理？",
+    "answer_points": [
+      "工具描述信息会在第一轮对话时加载进上下文一起喂给大模型，skill/rule 也一并放入让模型选择",
+      "被追问上下文会满后补充：可写轻量 markdown 菜单文档，只写工具的适用场景",
+      "让模型先从菜单挑出两三个工具，再去加载对应的详细调用规则和参数文档"
+    ],
+    "quality": "partial",
+    "quote": "那如果有100个的话，那这个模型可能上来上下文就满了呀。"
+  },
+  {
+    "category": "agent",
+    "question": "对话轮次多导致上下文膨胀时一般怎么处理？",
+    "answer_points": [
+      "承认项目里没思考过这个问题，现场思考",
+      "常见做法是把前面多轮对话总结压缩，保留关键信息做备份",
+      "或者用就近原则丢掉前面较旧的对话"
+    ],
+    "quality": "partial",
+    "quote": "如果说这个对话轮次比较多，这个上下文膨胀了，你们一般怎么处理？"
+  },
+  {
+    "category": "project_scenario",
+    "question": "讲讲 SSE 是干什么的？你们项目中是怎么实现的？",
+    "answer_points": [
+      "SSE 是单向持续推送，本质是长连接的 HTTP",
+      "后端配 no-cache 和 event-stream 请求头做流式传输，每生成一个 chunk 就推给前端实现渐进式渲染",
+      "LLM 返回的是 JSON patch，后端将 patch 与之前的 UI 代码合并后整体推给前端",
+      "前端用两个换行符分割 chunk，递归解析渲染节点",
+      "网络分包可能导致 chunk 不完整，前端需要 buffer 缓存，把分割后最后一段 pop 出来与下一个 chunk 拼接",
+      "收到 type=done 时结束流式传输"
+    ],
+    "quality": "good",
+    "quote": "那SSE是干什么的呀？给我讲讲呗。"
+  },
+  {
+    "category": "project_scenario",
+    "question": "用户刷新页面后 SSE 会话怎么恢复？",
+    "answer_points": [
+      "存储当前对话的 session ID 到 localStorage，刷新后从 storage 加载并向后端发请求恢复会话",
+      "传输中刷新会建立 SSE 重连继续传输",
+      "后端是整体合并后再推给前端，保证推送的一定是完整界面，前端无需做合并处理"
+    ],
+    "quality": "good",
+    "quote": "OK, 那如果用户刷新页面会怎么办？"
+  },
+  {
+    "category": "project_scenario",
+    "question": "SSE 传输中途用户退出页面，几分钟后回来或直接刷新，后端是怎么设计续传的？",
+    "answer_points": [
+      "表示没深入了解后端实现，现场猜测",
+      "推测后端推 chunk 时会带 chunk ID，前端可把 session ID 和 chunk ID 一起存下来",
+      "请求时把会话和进度位置发给后端，后端据此分析进行到哪一步再续上"
+    ],
+    "quality": "poor",
+    "quote": "那如果说用户刚才你说的那个正在SSD传输的过程中刷新了，它是怎么续上的？对后端是怎么设计的了解了吗？"
+  },
+  {
+    "category": "project_scenario",
+    "question": "虾皮这个项目后端是怎么实现的？你在其中负责什么？",
+    "answer_points": [
+      "后端用 Node，好像是 Nest 框架，整个前后端加 Agent 都由前端团队全栈完成",
+      "候选人负责前端界面搭建、组件封装、action 数据流解析",
+      "后端侧参与写组件的描述信息 markdown 文档、约束信息和调整系统提示词"
+    ],
+    "quality": "partial",
+    "quote": "那这个这部分具体怎么做的是弄的用什么框架之类的了解吗？"
+  },
+  {
+    "category": "project_scenario",
+    "question": "快手内容营销生产平台的这个 Agent 具体是干什么的？",
+    "answer_points": [
+      "帮助运营在小红书、什么值得买、百家号等平台批量生产图文引流",
+      "针对小红书做了专门的文案生成 Agent，把运营给的 5 种风格文案整理成知识库并写生成规则和示例",
+      "写了 skill 约束输出格式（话题、标题、文案、配图建议）",
+      "加了意图识别节点（平台在线推理节点），轻量调用模型判断用户要生成哪个平台的文案再路由到对应 Agent",
+      "还接入了文生图/图生图模型（当时用 AI 写的前后端同仓库 Node 项目）"
+    ],
+    "quality": "good",
+    "quote": "这个我看你有内容营销生产平台哎，这个这个Agent具体是干啥用的哦？"
+  },
+  {
+    "category": "agent",
+    "question": "你们这个 A 平台（编排平台）底层是怎么做的？有没有 agent loop？你的工作是编排 agent loop 吗？",
+    "answer_points": [
+      "自己的工作只是在平台上写 skill、知识库、系统提示词，配好后生成 API 接入前后端项目",
+      "面试官指出这听起来是 workflow 而非 agent loop，候选人认可，skill 里写好每一步做什么",
+      "承认内容营销项目只是生成文案，没有很多步骤"
+    ],
+    "quality": "partial",
+    "quote": "它的底层是怎么做的？……他没有agent loop吧？"
+  },
+  {
+    "category": "project_scenario",
+    "question": "Playwright + CDP 自动化发布小红书是在哪里运行的？有沙箱环境吗？",
+    "answer_points": [
+      "参考 GitHub 上的 Go 项目转成 TS/JS 实现，原理是 Playwright 用 CDP 模拟浏览器点击实现自动发布",
+      "小红书风控严，遇到过封号，后来改回手动发布",
+      "项目还有桌面端，云端部署好的网页可以直接用，推测有沙箱"
+    ],
+    "quality": "partial",
+    "quote": "p l a ywright+CDP这个是在用使用方的……还是说你们有沙箱换境"
+  },
+  {
+    "category": "agent",
+    "question": "沙箱（Sandbox）在里面是什么定位？",
+    "answer_points": [
+      "理解沙箱是一个隔离的独立运行环境，像内存一样，重启或摧毁后里面的数据会消失",
+      "数字员工项目里遇到运行太久会停下来问是否继续，继续后沙箱重启且数据全部清空",
+      "NFS 持久化区域里存的 SSH key 也曾丢失"
+    ],
+    "quality": "partial",
+    "quote": "那沙乡这个了解吗？Sandbox在里面是什么定位啊？"
+  },
+  {
+    "category": "agent",
+    "question": "沙箱用的什么方案？外部 SDK 还是外部平台？",
+    "answer_points": [
+      "表示不太了解沙箱的具体技术方案"
+    ],
+    "quality": "poor",
+    "quote": "那乡用的什么方案？沙箱用的什么方案？用的什么什么外部SDK啊"
+  },
+  {
+    "category": "backend",
+    "question": "NFS 知道是什么东西吗？",
+    "answer_points": [
+      "理解为一个持久化区域，可以存东西",
+      "数字员工需要连用户的 git 仓库时会把 SSH key 存进去",
+      "沙箱重启后仍可通过共享地址访问 NFS 里持久化的数据"
+    ],
+    "quality": "partial",
+    "quote": "OK, NFS知道是什么东西吗？"
+  },
+  {
+    "category": "agent",
+    "question": "全栈项目里 Agent 一般选什么 AI 框架？你们自己写过 ReAct loop 吗？",
+    "answer_points": [
+      "快手只需在平台配置好 Agent 直接调 API，底层实现不清楚",
+      "调试时能看到调用树（工具调用沙箱的步骤和过程），平台已封装好",
+      "虾皮用的是 LangChain 框架"
+    ],
+    "quality": "partial",
+    "quote": "Agent一般是选什么AI框架用的什么框架，还是自己写了一个react的录录loop"
+  },
+  {
+    "category": "agent",
+    "question": "LangChain 和 LangGraph 有什么区别？",
+    "answer_points": [
+      "表示不太清楚两者的区别"
+    ],
+    "quality": "poor",
+    "quote": "Longchain long chain跟long graph有什么区别啊？嗯，我也不太清楚。"
+  },
+  {
+    "category": "project_scenario",
+    "question": "你在虾皮用 LangChain 具体做了什么？",
+    "answer_points": [
+      "负责写 API catalog 的定义，用 zod schema 配置组件信息",
+      "前端封装一个组件就在 Agent 侧的 catalog 文件里对应配置",
+      "生成效果不好时调整系统提示词（prompt engineering）"
+    ],
+    "quality": "good",
+    "quote": "那你用long Cha干什么了呀？"
+  },
+  {
+    "category": "project_scenario",
+    "question": "虾皮是全栈 Node 团队，为什么选 LangChain？有没有更好的选择？",
+    "answer_points": [
+      "解释该部门是第一次做 AI 项目，团队边学边做",
+      "承认选型当时没有深入论证，其他面试也被问过这个选择"
+    ],
+    "quality": "partial",
+    "quote": "你们这个虾皮既然是一个全站的node的团队，为什么要选long chat?"
+  },
+  {
+    "category": "agent",
+    "question": "你有没有自己思考或学习过如何从零搭一个 Agent（比如学习 Claude Code 的设计）？",
+    "answer_points": [
+      "表示有拓展学习过",
+      "但承认涉及更底层的内容还没有太了解"
+    ],
+    "quality": "poor",
+    "quote": "比如说学习一些比如说cloud或者code，他们怎么设计的之类的。"
+  },
+  {
+    "category": "agent",
+    "question": "平常写代码都是 AI Coding 吗？用什么工具和模型？",
+    "answer_points": [
+      "实习基本都用 AI Coding，公司还有 AI Coding 覆盖率指标",
+      "虾皮统一用 Cursor，快手用内部平台 my flicker 可调用国内外模型",
+      "日常业务用 Claude Sonnet 4.6，复杂任务用 Opus 或 GPT",
+      "订阅过 Claude Code Pro 但两个账号都被封了，现在没继续充"
+    ],
+    "quality": "good",
+    "quote": "那你平常写代码就是。诶，全是AI Co定吗？还是说会手写一些代码？"
+  },
+  {
+    "category": "frontend_framework",
+    "question": "React Native 你用过吗？具体做过什么？",
+    "answer_points": [
+      "虾皮 entry task 做过活动列表、参与活动、点赞评论的小项目",
+      "快手 L3 开发模式是基于 RN 的自动链路 skill 体系，但主要负责 skill 调试而非 RN 代码",
+      "承认 RN 了解不多，Vue 和 React 用得更多"
+    ],
+    "quality": "partial",
+    "quote": "内容创作平台GL诶用过React Native是吧。"
+  },
+  {
+    "category": "frontend_framework",
+    "question": "Zustand 是干什么的？",
+    "answer_points": [
+      "是一个全局状态管理库",
+      "可用来存多个界面共用的信息，比如用户信息",
+      "各界面可共同访问同一个 store"
+    ],
+    "quality": "good",
+    "quote": "做Stand干啥来着？就是用用它干什么呀？"
+  },
+  {
+    "category": "frontend_framework",
+    "question": "为什么选 Zustand 而不是 MobX 或 React 自带的方案？",
+    "answer_points": [
+      "主要是它比较轻量，用起来简单方便",
+      "知道还有其他 store 方案，但没做深入对比"
+    ],
+    "quality": "partial",
+    "quote": "为什么选做stand的不选一些mobs或者说呃就是react自带那个呢？"
+  },
+  {
+    "category": "frontend_framework",
+    "question": "了解 Zustand 的设计原理吗？脱离 React 环境还能用吗？",
+    "answer_points": [
+      "没思考过脱离 React（不用 hook）能否使用的问题",
+      "推测原理类似发布订阅模式：组件依赖 store 中某字段即订阅，字段更新后通知依赖者更新"
+    ],
+    "quality": "partial",
+    "quote": "比如说它在脱离react环境的情况下能不能接着用啊？"
+  },
+  {
+    "category": "project_scenario",
+    "question": "数字员工项目里的多策略断点续跑具体是怎么做的？",
+    "answer_points": [
+      "起因是喂长 PRD 时运行中途沙箱重启、NFS 数据丢失的 bug，先推动基建平台（Mario）修复",
+      "策略一：每实现完一个子需求就立即 commit 到仓库，避免崩溃后全部代码丢失",
+      "策略二：维护 progress.md 文档记录执行到哪一步，下次启动参考进度接着跑",
+      "策略三：把 SSH key 存到 NFS 持久化，重启后无需再向用户索要即可自动连 git 仓库"
+    ],
+    "quality": "good",
+    "quote": "我看你中间提到了支持多策略断点续跑。这个多策略断点续跑是怎么说具体干什么的呀？"
+  },
+  {
+    "category": "project_scenario",
+    "question": "Mario 数字员工平台是一个中心化页面吗？数字员工是如何使用的？",
+    "answer_points": [
+      "Mario 嵌在内部聊天软件 Kim 里，可在界面配置系统提示词和 skill 生成数字员工",
+      "数字员工可添加到群聊或单独对话",
+      "候选人负责把创建任务、变更、分支等整个步骤写成 CLI 命令写进 skill，实现自动化工作流"
+    ],
+    "quality": "good",
+    "quote": "这个平台是一个中心化的一个页面，然后给所有人用是吗？"
+  },
+  {
+    "category": "project_scenario",
+    "question": "数字员工做的事情是让它能读仓库、帮你写代码？这个项目的目标是什么？",
+    "answer_points": [
+      "数字员工收到 PRD 后自动执行创建任务、变更、git 分支等全流程并写代码",
+      "实现代码后自动部署到预发环境，产品点开链接验收，不符合要求再用对话形式让它修改",
+      "目标是让基金会类、非核心的前端业务（外包类项目）由数字员工自动完成"
+    ],
+    "quality": "good",
+    "quote": "那你做的事情是让他能去读仓库然后帮你写代码。"
+  },
+  {
+    "category": "project_scenario",
+    "question": "热点定时捕捉系统这个项目是做什么的？",
+    "answer_points": [
+      "每天在群聊推送抖音、小红书、微博的热点话题，服务运营发图文",
+      "抖音微博有现成榜单，小红书没有，用类似 Playwright 的浏览器自动化工具（water？）抓取",
+      "先访问首页获取 30 多条帖子，再逐条访问详情计算点赞收藏评论数，超过阈值（如 5000）记录内容",
+      "汇总写入共享文档并把更新消息发到群聊",
+      "基于内部 automate 平台编排，可配置执行频率，提供无头浏览器函数、AI 分析和发消息接口"
+    ],
+    "quality": "good",
+    "quote": "热点定时捕捉系统这个是做什么的呀？"
+  },
+  {
+    "category": "algorithm",
+    "question": "算法题：实现 LRU 缓存（get/put，要求时间复杂度）",
+    "answer_points": [
+      "想到用队列：get/put 时把元素移到队尾，超容量时从队头取出最久未使用元素",
+      "被追问 JS 有没有其他数据结构时只答出 Set、Map 和数组",
+      "提出用 Map 存索引定位元素再 splice 删除并 push 到末尾，但 splice 是 O(n) 无法满足 O(1)",
+      "最终未给出 O(1) 的双向链表 + 哈希表标准解法，面试官让不用写了"
+    ],
+    "quality": "partial",
+    "quote": "啊，这道算法题吧，你一般用什么GS吗？……有思路吗？可以先讲讲思路。"
+  },
+  {
+    "category": "frontend_basic",
+    "question": "JS 有哪些内置数据结构可以用来代替队列？",
+    "answer_points": [
+      "只提到 Set、Map 和数组",
+      "认为队列本身也是用数组实现的，没有其他"
+    ],
+    "quality": "partial",
+    "quote": "那GS它有没有一些可以不用队列的形式呢？它有没有一些数据结构啊？"
+  },
+  {
+    "category": "frontend_basic",
+    "question": "Map 和 Object 有什么区别？Map 是有序还是无序的？",
+    "answer_points": [
+      "两者都是 key-value 形式",
+      "Map 不限制 key 和 value 的类型，可以混着搭配",
+      "认为 Map 是无序的（实际 Map 保持插入顺序，此处答错）"
+    ],
+    "quality": "partial",
+    "quote": "希表map跟objects有什么区别？……那是有序的还是无序的呀？"
+  },
+  {
+    "category": "algorithm",
+    "question": "双向链表了解吗？（用于 LRU 的 O(1) 解法）",
+    "answer_points": [
+      "先误解为是否用双指针，反应过来后没能说出双向链表的实现",
+      "面试官随即表示不用写了"
+    ],
+    "quality": "poor",
+    "quote": "双向链表了解吗？"
+  },
+  {
+    "category": "agent",
+    "question": "你在 skill 编写上有什么见解和沉淀下来的思路？",
+    "answer_points": [
+      "把每个步骤写清楚，明确每步的输入和输出，避免大模型不遵守执行流程",
+      "给出具体示例，出错时把反例也写进去",
+      "输出前加自检环节，让模型自己检查是否满足条件再输出",
+      "配置 memory 文件夹：错误分类记录到菜单文件对应的 MD 文件，下次先加载历史经验避免重犯",
+      "skill 里可调用子 Agent 分角色（调度方循环调用写代码和验证 UI 的子 Agent）",
+      "多个 skill 的上下游产物放同一文件夹（如 .ai-codework）共享访问",
+      "skill 除 markdown 外可带 references 参考文档和 scripts（如 Python 脚本）"
+    ],
+    "quality": "good",
+    "quote": "你在这个skill编写上有什么见解吗？就是有什么沉淀下来的一些思路。"
+  },
+  {
+    "category": "agent",
+    "question": "这些 skill 是都在沙箱里运行吗？如果想中心化、多人协作共享沉淀怎么做？",
+    "answer_points": [
+      "L3 项目的 skill 不在沙箱里，是下载到磁盘本地运行的",
+      "中心化场景：L3 有自己的 memory 文件夹，沉淀的 memory 会一起 push 上去",
+      "下次更新 skill 时可拉取之前的经验一起拉下来共享"
+    ],
+    "quality": "partial",
+    "quote": "这些全放在沙箱里边吗？……那如果想让他中心化这个怎么整"
+  }
+]

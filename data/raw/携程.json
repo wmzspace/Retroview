@@ -1,0 +1,314 @@
+[
+  {
+    "category": "agent",
+    "question": "你平时（工作或业余）用龙虾（Claude）做过什么有意思的事情？",
+    "answer_points": [
+      "用 Kimi 云端部署龙虾并接入飞书，可通过发消息对话",
+      "配置小红书 MCP，对话后自动生成图片和文章并自动发布到平台",
+      "曾设想做\"Agent 公司\"，让不同 Agent 扮演不同角色自己开会",
+      "只玩了一个月（会员期限），最终没有做成完整产品"
+    ],
+    "quality": "partial",
+    "quote": "你用龙虾做过什么有意思的事情吗……配了个小红书的MCP，然后当时就是有实现去生成图片还有文章，然后就去发表上去"
+  },
+  {
+    "category": "project_scenario",
+    "question": "介绍快手前端研发数字员工项目，你在 skill 和系统提示词写法上学到了什么？",
+    "answer_points": [
+      "参考公司 L3 模式中优秀 skill 的源码写法，借鉴到 CSR 数字员工里",
+      "skill 不只写 MD 文本，可建 references 文件夹放参考文件、scripts 放脚本",
+      "系统提示词要讲清楚每一步做什么、输入输出是什么，约束 SOP 减少幻觉",
+      "给输入输出举具体实践例子，模型犯错时补充反例",
+      "输出前增加自检环节，让模型检查是否满足要求、是否规避了错误"
+    ],
+    "quality": "good",
+    "quote": "快手里面有个数字员工的那个搭建……当时我要去参考公司L3开发模式里面写的比较好的skill，看他们源码怎么写"
+  },
+  {
+    "category": "agent",
+    "question": "如何让一个 skill 自我进化？",
+    "answer_points": [
+      "建立 memory 文件夹记录历史错误",
+      "人工打断时让 Agent 分析打断原因、归类所犯错误",
+      "memory 目录中列举所有错误类型并对应到各经验 MD 文件，按类别写入",
+      "下次调用 skill 前先读取之前犯过的错误，不断收集错误、越用越聪明"
+    ],
+    "quality": "good",
+    "quote": "如何让一个Skill它呃可以自我进化……让它有一个memory的文件夹……这样的话他就会越用越聪明"
+  },
+  {
+    "category": "project_scenario",
+    "question": "数字员工长对话中沙箱重启导致代码和凭证丢失，你们怎么解决？",
+    "answer_points": [
+      "先反馈 Mario 平台，确认是基建 bug（长对话重启不应清空 NFS 持久化数据）",
+      "把大需求分解成多个子需求，每个子需求完成后及时 push 到远程仓库",
+      "写 progress.md 记录运行到哪一步、做到哪个需求点，崩溃恢复后读进度文件接着做",
+      "把 SSH/git 凭证存到 NFS 持久化区域，避免沙箱重启后丢失"
+    ],
+    "quality": "good",
+    "quote": "它就会突然就会把沙箱给重启……之前存在NFS里面的SSH的凭证，它也会一键清空"
+  },
+  {
+    "category": "project_scenario",
+    "question": "如何让数字员工能快速复用到任意一个新项目上？",
+    "answer_points": [
+      "做了\"生成数字员工的数字员工\"，设计研发工厂",
+      "重构之前的 skill，把专属配置信息抽离出来",
+      "skill 可针对不同仓库一键复刻并一键发布",
+      "再调用生成数字员工的 skill，通过对话提供新仓库链接、team 链接、个人邮箱，即可快速配置出该项目专属的数字员工"
+    ],
+    "quality": "good",
+    "quote": "能不能让我把它做一个就是针对于任何一个项目，都可以快速地去生产出这样的一个数字员工"
+  },
+  {
+    "category": "project_scenario",
+    "question": "热点捕捉系统是如何绕过小红书风控抓取热点内容的？",
+    "answer_points": [
+      "小红书没有热点榜单接口，不能简单请求获取，需写类似爬虫的方案",
+      "参考 GitHub 上小红书 MCP 项目写法并转成 TS，用 Playwright 抓取",
+      "小红书请求签名包含鼠标移动/点击等行为特征和硬件指纹，用于判断是否真人",
+      "方案一：逆向签名算法，但签名算法一变就失效，不稳定",
+      "方案二：用 Puppeteer（类似 CDP）模拟真实人类行为，比较有效",
+      "对比开源项目发现自己操作太机械：请求前随机生成 5-10 次鼠标移动，点击进入详情加随机延迟，避免退登/封号"
+    ],
+    "quality": "good",
+    "quote": "小红书它其实是没有热点话题这个榜单的……因为它会风控会比较严，当时我们也遇到很多问题"
+  },
+  {
+    "category": "frontend_engineering",
+    "question": "微前端架构你了解多少？子应用的 CSS 和 JS 是如何隔离的？",
+    "answer_points": [
+      "每个子应用可以用不同的技术栈，且可独立部署",
+      "CSS 文件（如 .module.less）编译时加哈希值，运行时不会重名冲突",
+      "同名属性还会加子应用前缀（如 -cc），进一步避免冲突",
+      "每个子应用有单独的 window（Proxy 代理），设置值优先落在子应用 window 上，实现沙箱隔离",
+      "缺点：编译时额外做前缀/哈希计算，有一定性能开销"
+    ],
+    "quality": "good",
+    "quote": "它在编译的时候会把它加一个哈希值……他们每一个子应用会有他们一个单独的window，就是一个单独的proxy的代理"
+  },
+  {
+    "category": "agent",
+    "question": "讲讲 Agent（LangChain）的工作原理/运行流程？",
+    "answer_points": [
+      "用户消息先加载到上下文喂给 LLM",
+      "API 选取和组件选取作为 tool 封装在 Agent 里",
+      "LLM 需要调用时以 JSON 格式返回 tool 描述和参数，Agent 解析后调用对应 tool 函数",
+      "tool 执行结果再返回给 LLM，形成循环，直到 LLM 不再返回 tool 才停下",
+      "快手有 Agent 基建平台可快速配提示词/skill/知识库，虾皮没有基建，用 LangChain 从零搭建"
+    ],
+    "quality": "good",
+    "quote": "大模型就会把它作为一个Json的格式会返回过来……调用了这个tool之后，它再把结果再返回给LLM，直到LLM没有去返回tool就会停下来"
+  },
+  {
+    "category": "agent",
+    "question": "API 文档太长影响主 Agent 性能，如何优化？",
+    "answer_points": [
+      "整个 API 文档很长（每个字段都有详细描述），放在主 Agent 上下文里太占用",
+      "在选取 API 的 tool 里再封装一个子 Agent",
+      "给子 Agent 写独立的系统提示词和它自己的 tool，把选 tool 能力抽离出去",
+      "可以并行完成，且不占用主 Agent 的上下文"
+    ],
+    "quality": "good",
+    "quote": "它整个文档很长的话放在主要的Agent里面，可能就会占用它那个时间……就想的是去创建一个子Agent"
+  },
+  {
+    "category": "agent",
+    "question": "LangChain 中的中间件机制了解吗？",
+    "answer_points": [
+      "了解到框架里有中间件，有不同调用时机（调用 LLM 之前、调用模型之后）",
+      "可用于规范输入输出格式",
+      "只是接触学习过，理解不深"
+    ],
+    "quality": "partial",
+    "quote": "它里面有一些中间件，它中间件会有一些调用时机，比如说在调用LLM之前或者调用模型之后"
+  },
+  {
+    "category": "backend",
+    "question": "SSE 流式传输的前后端是如何实现的？",
+    "answer_points": [
+      "后端配置请求头 no-cache，告诉浏览器不需要缓存，否则无法呈现流式效果",
+      "设置传输模式为 text/event-stream，表明是流式传输",
+      "前端收到 chunk 后用两个换行符分割，把每个 JSON 节点单独渲染",
+      "chunk 可能不完整，需把最后一个节点 pop 出来存入 buffer",
+      "等下一个 chunk 到达后拼接、再分割、再渲染"
+    ],
+    "quality": "good",
+    "quote": "后端那边得先去配那个请求头，比如no cache……传输的模式叫event stream……前端要做一个buffer的一个缓存"
+  },
+  {
+    "category": "project_scenario",
+    "question": "AI 生成界面的增量渲染是如何实现的？",
+    "answer_points": [
+      "最初等 LLM 生成完整页面代码后才返回渲染，用户要等半分钟到一分钟，体验差",
+      "改为后端存 uState，每次用户对话时把之前的 UI 状态传给模型",
+      "基于之前状态只生成 json patch 操作（add/remove/replace）而非完整 a to UI",
+      "后端调用合并函数把 patch 合并到之前的 a to UI 再传给前端",
+      "在已有 UI 上保持并做增删改，提高用户感知"
+    ],
+    "quality": "good",
+    "quote": "他会把之前的ustate会去传过去，基于之前的一个UI的一个状态去生成一个Json patch……生成一些操作，像add呀remove或者replace"
+  },
+  {
+    "category": "frontend_engineering",
+    "question": "大数据量（长列表）如何渲染？前端分页的数据结构如何设计？",
+    "answer_points": [
+      "分页：把当前页码和 pageSize 一起发给后端，后端返回最新列表直接渲染",
+      "首屏优化：列表先存 localStorage/AsyncStorage，进入页面先读缓存再异步发请求，无等待时间",
+      "前端存储上只需存当前一页的数据",
+      "数据量大时用虚拟列表：根据滚动位置计算可视区最上/最下元素的索引",
+      "用 slice 截取数组只渲染可视区部分数据",
+      "对整个渲染列表加 translate 同步滚动偏移，实现只渲染小部分数据"
+    ],
+    "quality": "partial",
+    "quote": "如何得到大数据量的一个渲染……它整个数据这个数组去做一个截取，用slice做个截取之后，只渲染这一部分的数据"
+  },
+  {
+    "category": "backend",
+    "question": "SSE 和 WebSocket 的区别？各自适用什么场景？",
+    "answer_points": [
+      "SSE 是单向的，WebSocket 是双向全双工通信",
+      "SSE 基于普通 HTTP，WebSocket 是一种升级协议",
+      "WebSocket 断线后不提供自动重连，SSE 提供自动重连能力",
+      "本项目只需后端单向推送 a to UI，所以用 SSE 不需要 WebSocket",
+      "双向场景举例：多人协作编辑共享文档（视频聊天是否算双向时犹豫，由面试官引导）"
+    ],
+    "quality": "partial",
+    "quote": "SSE的话，它是一个单向的吧，像websocket它是一个双向全双工的……wesocket它是一种升级的一种协议"
+  },
+  {
+    "category": "frontend_basic",
+    "question": "讲一下事件循环（宏任务与微任务）？",
+    "answer_points": [
+      "JS 先执行同步代码",
+      "然后清空所有微任务，再执行一个宏任务，再清空所有微任务，如此循环",
+      "常见宏任务如 setTimeout，微任务如 Promise"
+    ],
+    "quality": "good",
+    "quote": "首先会去执行一个同步代码，然后再去清空所有的微任务，然后再去清空一个宏任务……set timeout是宏任务，promise是微任务"
+  },
+  {
+    "category": "frontend_framework",
+    "question": "React 的更新和 diff 机制是怎样的？如何减少不必要的渲染？",
+    "answer_points": [
+      "React 不是响应式机制，setState 改变状态会触发组件重新渲染",
+      "渲染时生成虚拟 DOM 做同层比较（不跨层比较）",
+      "标签不同则销毁并重建节点；标签相同只更新变化的属性",
+      "列表渲染用 key 绑定辅助比较，若只用索引，删除第一个元素会导致整个列表变化",
+      "父组件重渲染会影响子组件：传函数用 useCallback 包装避免重复创建，子组件用 React.memo 减少不必要渲染"
+    ],
+    "quality": "good",
+    "quote": "react的话它可能就是改变了一个状态，use state改变了一个状态的话，它就会去触发这个组件的一个重新渲染……它会生成一个虚拟DOM数"
+  },
+  {
+    "category": "frontend_framework",
+    "question": "Vue 的响应式原理和 diff 算法是怎样的？与 React 有何不同？",
+    "answer_points": [
+      "Vue2 用 Object.defineProperty，Vue3 用 Proxy",
+      "Proxy 可以监测到数组以及对象新增属性的变化",
+      "Vue 是发布订阅模式：组件订阅字段，数据改变时收集依赖并精确通知对应组件更新",
+      "与 React 不同：Vue 能精确知道哪个数据变了，React 只知道整体重渲染组件",
+      "Vue2 diff 是双端比较（新旧节点 start/end 互相比较），React 是单边比较",
+      "Vue3 引入最长递增子序列：找出未改变的最长节点序列固定住，再做最小更改"
+    ],
+    "quality": "good",
+    "quote": "V2的话是defineProperty，V3的话是proxy……V3的话它里面加了一个叫最长递增子序列……vue的话它就是双边，react的话是单边"
+  },
+  {
+    "category": "frontend_basic",
+    "question": "type 和 interface 的区别是什么？",
+    "answer_points": [
+      "含糊回答：type 是一种数据类型，interface 是接口，可定义数据结构",
+      "承认对 TS 高级用法了解较少",
+      "平时多用 AI 写代码，对类型细节关注较少"
+    ],
+    "quality": "poor",
+    "quote": "type的话，我对它的理解就是呃这种数据类型吧，然后interface就是一个接口……ts可能就会有点了解的会少一点点"
+  },
+  {
+    "category": "frontend_framework",
+    "question": "你在项目中写过自定义 Hook 吗？",
+    "answer_points": [
+      "实际业务中基本没写过自定义 Hook",
+      "在虾皮 RN 项目写过使用 AsyncStorage 的缓存 Hook：进入活动列表先把列表存入，首次加载先从 storage 读取再异步发请求",
+      "承认当时第一次接触 React，Hook 设计得不够好"
+    ],
+    "quality": "partial",
+    "quote": "在实际业务里面实习的时候，业务里面好像没有自己去写一些hook……当时有去写一个hook，把它存到那个async storage里面"
+  },
+  {
+    "category": "frontend_framework",
+    "question": "组件（Component）和 Hook 的区别是什么？",
+    "answer_points": [
+      "组件有 HTML 元素/DOM 节点，有样式，有自己的状态和逻辑",
+      "Hook 用于封装可复用的逻辑"
+    ],
+    "quality": "partial",
+    "quote": "组件它是有一个有DOM节点的，有样式的，也有自己的一些状态，一些逻辑的……hook的话，可以去封装一些复用的一些逻辑"
+  },
+  {
+    "category": "backend",
+    "question": "你写过 Node 中间件吗？",
+    "answer_points": [
+      "没有写过中间件",
+      "接触过 Node：快手内容营销平台是全栈项目，但后端部分主要用 AI 辅助完成"
+    ],
+    "quality": "poor",
+    "quote": "我没有写过中中间件。嗯，但是我有相当于有接触过no的吧……里面像后端这方面可能就是用AI来做的"
+  },
+  {
+    "category": "project_scenario",
+    "question": "你理解的数字员工 skill 里的 SOP 流程是什么？",
+    "answer_points": [
+      "skill 分成多个步骤：第一步创建任务",
+      "第二步创建变更（新建 git 分支）",
+      "然后写代码、生成测试用例",
+      "调用 Friday 平台进行测试，最后发布部署",
+      "承认自己写的 skill 链路比较简单，L3 模式的流程更全面"
+    ],
+    "quality": "partial",
+    "quote": "我理解的SOP就是它skill里面分成……第一个是创建任务，然后第二个是去创建它的那个变更，然后到写代码，到发布部署"
+  },
+  {
+    "category": "project_scenario",
+    "question": "L3 开发模式的前置依赖（输入）有哪些？",
+    "answer_points": [
+      "传入 PRD 后先生成 checklist，把所有需求拆成小的子需求",
+      "上传 Figma，生成 PRD 与 Figma 相互对照的 HTML 报告",
+      "在代码里做标注，把对应 Figma 组件的 node 标在代码中，供后续真机截图与 Figma 截图对比验收",
+      "技术方案是真人写好的现成方案，不是 AI 生成",
+      "还有测试文档 ktest 的链接"
+    ],
+    "quality": "good",
+    "quote": "前置依赖就是最开始首先传入一个PRD的话，它会生成一个checklist……上传一个Figma，会生成一个Figma和PRD两个相互对照的一个文档"
+  },
+  {
+    "category": "project_scenario",
+    "question": "PRD 和技术方案写得不规范（模糊、有歧义、编号体系不一）时怎么办？",
+    "answer_points": [
+      "当时处于开发验证阶段，先自己把 PRD 补齐到完整，再调试看能否完整生成代码",
+      "后续需要做的是规范 PRD 和技术方案（当时还没做）",
+      "不同 PRD 编号体系不同，原则是拆分后的编号必须与 PRD 原版一致",
+      "需求点只要写清楚场景、条件和目标，skill 就能解析生成 checklist",
+      "复合需求（如\"未登录/登录后\"两种场景）会被拆成单独可验收的需求点",
+      "歧义表达（如语义不清的箭头、简写）会导致 AI 停下来追问是哪种意思",
+      "技术方案须写清接口、响应每个字段及描述；字段使用不一致等细节问题需评审会才能发现，文档不写清会导致代码生成出错"
+    ],
+    "quality": "good",
+    "quote": "PRD里面有一些会写的很模糊啊一些不标准的地方……我们首先我们是先自己把它补齐之后去做一个调试"
+  },
+  {
+    "category": "project_scenario",
+    "question": "增量渲染下前端收到的是增量片段还是全量？流式传输时前端还要做什么处理？",
+    "answer_points": [
+      "后端每次生成 json patch 节点后，先调用函数与之前的 UI 合并，再发给前端",
+      "前端每次收到的是递增的完整片段（如第一次 1、第二次 12、第三次 123），直接渲染即可，前端无需自己做合并",
+      "区别主要在后端：后端已把 patch 合并好再发",
+      "但若用 SSE 流式，一个包分割成多少 chunk 由传输层控制、前后端无法干预",
+      "前端仍需用换行符分割、把不完整 chunk 存 buffer 等下一个 chunk 拼接后再渲染",
+      "如果等全部生成完再一次性发，前端则不需要做 buffer 处理"
+    ],
+    "quality": "good",
+    "quote": "前端第一次收到的是1，第二次收到的是12，第三次收到是123，就是它其实每次是合并好的……用SSE的话，它可能会收到不完整的包"
+  }
+]

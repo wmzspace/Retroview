@@ -1,0 +1,296 @@
+[
+  {
+    "category": "project_scenario",
+    "question": "L3开发模式中你负责逻辑实现的优化，遇到了哪些难题，是怎么解决的？",
+    "answer_points": [
+      "Friday真机截图工具有时会乐观通过（不实际调用工具、直接读代码就判定功能实现），解决方式是每轮检测必须先校验Friday的输出文件、通过后才进入下一个案例",
+      "PRD预期值、mock数据值、界面渲染值三者不一致时AI判断易出错，在skill中加规则辅助判断：mock与渲染一致但与预期不符可能是mock产物问题，渲染与mock不一致才是代码生成问题",
+      "同一skill在不同Agent平台和不同模型上效果不一，myflicker命令行模式下Friday滑到页面底部截图有bug，加KSDT的capture截图兜底做独立二次校验，两轮校验通过才退出"
+    ],
+    "quality": "good",
+    "quote": "我当时有发现几个问题吧。第一个就是它的一个Friday……有的时候会乐观通过"
+  },
+  {
+    "category": "project_scenario",
+    "question": "L3生成的测试用例不全、不同模型生成效果不一，如何保证测试用例对PRD需求的完整覆盖？",
+    "answer_points": [
+      "session以JSON格式生成，包含prd refs和KTest refs字段，追溯每个测试用例来自PRD哪个子需求，避免AI幻觉编造PRD中不存在的用例",
+      "生成完所有session后对PRD每个子需求checklist做遍历，验证每个子需求至少被一个session包含",
+      "对KTest平台上的测试案例同样遍历验证双向覆盖，最后生成HTML矩阵图，可视化确认session与PRD需求一一对应、接近百分之百覆盖"
+    ],
+    "quality": "good",
+    "quote": "在它生成测试案例的时候……做一个比较双向的一个验证"
+  },
+  {
+    "category": "project_scenario",
+    "question": "Figma设计稿与PRD逻辑产生冲突时，你的自动化系统是怎么解决的？",
+    "answer_points": [
+      "团队讨论结论是Figma界面呈现是最终效果、一定是最准的，最初大模型会以PRD为准，后来在skill的prompt中写明冲突时以Figma为准",
+      "解析完PRD后传入Figma链接，下一步做PRD与Figma的对比，输出差异矩阵表格（哪些PRD有Figma没有、哪些相反）",
+      "工程师可查看输出发现差异后人工介入，与产品或UI商量最终以什么为准；无人介入时默认以Figma为准"
+    ],
+    "quality": "good",
+    "quote": "如果遇到了菲格玛设计稿跟PRD逻辑产生冲突的时候，你的那自动化系统是怎么解决的呢"
+  },
+  {
+    "category": "project_scenario",
+    "question": "Figma与PRD之间做diff用的是模型还是其他算法？是否是多模态？",
+    "answer_points": [
+      "用大模型自己分析PRD每个需求与Figma内容的对应关系",
+      "把Figma的所有节点拉下来，模型可读图（多模态），自己分析PRD文本与Figma节点做一一对应",
+      "还会到代码里找对应组件，把Figma的note ID像打标一样标记写入代码"
+    ],
+    "quality": "good",
+    "quote": "Figma跟PRD之间去做diff的这个，用的是模型还是用的什么其他算法"
+  },
+  {
+    "category": "project_scenario",
+    "question": "数字员工希望脱离技术工种让业务方直接用，涉及数据保密、代码保密、人工护栏等安全问题你们是怎么处理的？",
+    "answer_points": [
+      "坦诚当时还在开发过程中，尚未考虑到数据保密、代码保密、人工护栏等安全问题"
+    ],
+    "quality": "poor",
+    "quote": "涉及到一些安全问题，就是数据保密、代码保密……你们是怎么去的"
+  },
+  {
+    "category": "project_scenario",
+    "question": "数字员工是你们的基础设施吗？你参与了其中哪部分开发？",
+    "answer_points": [
+      "Mario平台是已有基础设施，自己是基于该平台二次搭建前端研发的完整流程（创建任务、创建KFC变更、创建kit分支、开发后发布到PRT环境）",
+      "相当于在基建部已有基建上挂载一些skill，组成一个完整的前端研发工作流"
+    ],
+    "quality": "good",
+    "quote": "这个数字员工也是你们的……基础设施对吧？还是你参与了其中的一部分开发"
+  },
+  {
+    "category": "project_scenario",
+    "question": "数字员工运行久了会停下询问是否继续，沙箱重启后NFS持久化数据也丢失，如何兜底？",
+    "answer_points": [
+      "先oncall Mario平台确认为平台bug（长时间运行沙箱不应重启、重启后NFS数据不应丢失），但前端仍需自行兜底",
+      "按子需求粒度：每完成一个子需求就commit push到远程仓库，减少崩溃时的代码丢失",
+      "让数字员工维护progress.md进度文件，每个步骤都更新当前位置，重启后先读该文件续上之前的进度",
+      "把SSH key等存到NFS持久化地址，避免下次对话时忘记仓库连接凭据"
+    ],
+    "quality": "good",
+    "quote": "他就要push上去的那一点，他突然就崩掉了……我就在想他能不能按照每一个子需求去commit push"
+  },
+  {
+    "category": "project_scenario",
+    "question": "如何让数字员工越用越聪明、不重复犯错？",
+    "answer_points": [
+      "数字员工有两种运行方式：本地myflicker运行和聊天软件内运行",
+      "本地运行时先生成memory文件夹，用户打断时把犯过的错误分类记录进去",
+      "下次遇到同样问题或开发到同样步骤时，先把对应memory加载到上下文，避免重复犯错，实现自我进化"
+    ],
+    "quality": "good",
+    "quote": "我当时也有尝试想让他就是越用越聪明……先去生成一个memory的一个文件夹"
+  },
+  {
+    "category": "project_scenario",
+    "question": "热点捕捉系统中小红书风控严格、爬虫易封号，你是怎么实现稳定获取热点帖子的？",
+    "answer_points": [
+      "研究GitHub开源项目了解原理：首页第一轮只能拿到帖子列表无详情和互动量，访问详情页需携带首页返回的逐帖动态签名一一对应请求",
+      "参考go实现的CDP浏览器模拟项目，先用playwright模拟进入首页和详情页，仍会被封号",
+      "进一步了解到请求头签名中包含鼠标移动、点击、滑动等人类行为统计，据此判断请求是否真人",
+      "改善方案：分批次请求、每次请求前加随机延迟、点击前让鼠标随机移动随机距离，增加随机性后封号概率变小"
+    ],
+    "quality": "good",
+    "quote": "小红书它可能就是整个风控会比较严……爬虫这些的话就会容易封号"
+  },
+  {
+    "category": "project_scenario",
+    "question": "介绍虾皮AI生成界面项目中Agent的运行机制（LLM与tool调用循环）",
+    "answer_points": [
+      "Prompt传给Agent再传给大模型，LLM根据用户输入决定是否调用tool",
+      "需要调用时LLM返回JSON，Agent按tool名字和参数调用对应函数，再把调用结果返还给LLM，循环直到LLM不再调用tool",
+      "了解到其中有格式校验等中间件，可在模型调用之前/之后等时机介入处理"
+    ],
+    "quality": "good",
+    "quote": "Agent就会把这句话传给大模型……它是一个循环的一个过程"
+  },
+  {
+    "category": "project_scenario",
+    "question": "API文档很长导致LLM生成变慢，你们是如何优化的？",
+    "answer_points": [
+      "在选取API的tool里再封装一个子Agent，给它独立的prompt和工具，让它单独获取所有API信息并调用对应API",
+      "子Agent的上下文不加入主Agent，主流程跑得更快",
+      "组件和API都采用按需加载模式：先拿只有一句话描述的菜单粗选3~4个，再把对应详细信息给LLM，节省上下文空间"
+    ],
+    "quality": "good",
+    "quote": "在选取API的这个tool里面又去封装了一个子Agent……按需加载"
+  },
+  {
+    "category": "frontend_basic",
+    "question": "简述浏览器从输入URL到页面渲染的整个流程；JS、CSS、图片资源加载卡住时是否会影响页面继续渲染？",
+    "answer_points": [
+      "DNS解析：先查浏览器缓存，再到操作系统，再递归查询域名/权威域名服务器拿IP",
+      "会先拿CDN信息，命中边缘服务器直接返回，未命中再回源站拉资源",
+      "TCP三次握手建立连接、发起请求、后端响应后四次挥手断开",
+      "渲染流程：构建DOM树、CSSOM树，再计算布局（坐标位置）、重绘上屏",
+      "补充了中间可能经过网关、负载均衡做路由和流量分发",
+      "资源阻塞部分回答错误：认为资源卡住不会阻塞其他资源、会重新请求，面试官纠正JS未特殊处理会阻塞后续加载，图片和CSS只影响渲染"
+    ],
+    "quality": "partial",
+    "quote": "简述一下浏览器从输入URL开始到页面渲染的整个流程……卡住阻塞了，这时候是否会影响页面的继续渲染"
+  },
+  {
+    "category": "frontend_basic",
+    "question": "重绘和回流有什么区别？React框架是怎么缓解回流的消耗的？",
+    "answer_points": [
+      "回流是元素大小、位置等布局的计算，重绘是CSS样式的绘制",
+      "React用Fiber架构缓解：链表形式存储子节点、父节点、兄弟节点，记录执行状态",
+      "渲染可分解为多个子任务，中途可中断，先处理优先级高的用户事件（如点击），之后再从记录的状态续上继续渲染，性能更好"
+    ],
+    "quality": "partial",
+    "quote": "你刚才提到的重绘，然后跟它对应的还有个叫回流，这两者有什么区别"
+  },
+  {
+    "category": "frontend_framework",
+    "question": "结合React应用开发，讲讲React的更新与diff机制",
+    "answer_points": [
+      "数据变化后先更新虚拟DOM树，整棵更新完再一次性更新到真实DOM",
+      "diff只比较同层节点，元素标签不同直接销毁该树重建；标签相同仅属性不同则只修改属性不重建",
+      "渲染列表必须绑定key优化性能：没有key只用索引，移动第一个节点会导致所有节点索引改变、开销很大"
+    ],
+    "quality": "good",
+    "quote": "还有其他要补充吗？就是包括react应用，就是怎么去应用react来开发的"
+  },
+  {
+    "category": "frontend_basic",
+    "question": "防抖和节流有什么区别？分别适用什么场景？",
+    "answer_points": [
+      "防抖：如搜索输入，停止输入后等1秒才发请求，期间再次输入则重置定时器，以最后一次触发为准，避免频繁请求",
+      "节流：规定时间窗口内（如3秒）只能触发第一次，之后触发无效",
+      "实现均基于闭包+定时器：节流在定时器未到期时直接退出不触发函数，定时器到期清理后才能再次执行"
+    ],
+    "quality": "good",
+    "quote": "防抖跟节流之间有什么区别，它们分别适用什么场景"
+  },
+  {
+    "category": "frontend_basic",
+    "question": "移动端滑动向上翻页加载，应该采用防抖还是节流？如何控制时间窗口？",
+    "answer_points": [
+      "选择节流：第一次滑动立即发起请求响应快，防抖需等最后一次滑动结束后再等一段时间才请求",
+      "绑定滑动事件+定时器控制窗口：定时器还在时触发滑动不执行请求函数，3秒后定时器销毁才可再次执行"
+    ],
+    "quality": "partial",
+    "quote": "涉及到一个滑动向上翻页嘛，那你觉得是采用这两种使用方式比较好"
+  },
+  {
+    "category": "frontend_basic",
+    "question": "节流时间到了但第一次请求的接口还没返回，这时会发起第二次请求吗？如何处理？",
+    "answer_points": [
+      "承认时间到了节流仍会发起第二次请求",
+      "隐约记得有方式可记录之前请求的状态，后续相同请求以之前那次为准（请求去重），但说不清具体实现，只提到与promise有关的印象"
+    ],
+    "quality": "poor",
+    "quote": "如果你第一次滑动请求的接口还没有返回，3秒之后……你会发起第二次吗"
+  },
+  {
+    "category": "frontend_framework",
+    "question": "如果让你用React实现移动端向上翻页（长列表分页加载），最优解是什么？",
+    "answer_points": [
+      "数据很多时不能全部渲染，用虚拟列表只渲染当前界面可见的数据（如RN中的FlatList）",
+      "首屏可将列表数据事先存入localStorage/sessionStorage，先从缓存加载提升用户体验，同时再向后端请求最新数据后更新"
+    ],
+    "quality": "partial",
+    "quote": "如果让你用react来实现这么一个翻页，你想到的最优解是什么"
+  },
+  {
+    "category": "frontend_basic",
+    "question": "CSS主流的动画属性有哪些？CSS动画与canvas、JS实现动画相比你倾向于用什么？",
+    "answer_points": [
+      "CSS有keyframes动画，可用百分比或from/to两种方式定义关键帧",
+      "支持先快后慢、先慢后快、匀速等缓动模式",
+      "猜测canvas用GPU绘制、性能会好一点，其他不了解",
+      "面试官提示需分场景：简单动画适合CSS，涉及动画游戏引擎等用canvas/GPU更多"
+    ],
+    "quality": "partial",
+    "quote": "CSS的动画属性。主流的有哪些？然后如果拿它和canvas和JS实现动画做比较"
+  },
+  {
+    "category": "frontend_engineering",
+    "question": "比较webpack和vite的区别并简述打包原理；你觉得两者哪个优势更大？",
+    "answer_points": [
+      "印象中webpack会把所有小文件整合成大文件，并去掉注释和无用代码压缩体积",
+      "记得一个是全部编译好再打包呈现，另一个是启动后运行时按需编译加载（vite基于ESM）",
+      "提到打包时对CSS等文件生成哈希值或前缀，可区分微前端架构的产物",
+      "选择上误答webpack优势更大，面试官纠正vite优势更大，webpack更适合老项目改造"
+    ],
+    "quality": "partial",
+    "quote": "那你比较一下派跟wait之间的区别，然后也简述一下它的打包原理呗"
+  },
+  {
+    "category": "frontend_basic",
+    "question": "前端流式通信中WebSocket和SSE的主要区别是什么？简述SSE的生命周期。",
+    "answer_points": [
+      "WebSocket是全双工双向通信，适用于视频会议、在线文档多人编辑等双向流场景",
+      "SSE是单向（只需后端持续推送给前端），类似长连接的HTTP协议；WebSocket则需要协议升级",
+      "SSE的EventSource自带重连机制，WebSocket没有自带重连",
+      "SSE生命周期表示不太了解，未答出"
+    ],
+    "quality": "partial",
+    "quote": "前端现在流式通信技术有……和SSE两者之间主要的区别，然后也简述一下它的生命周期"
+  },
+  {
+    "category": "frontend_basic",
+    "question": "用SSE如何实现断线后的断点续传？",
+    "answer_points": [
+      "后端每次推chunk时附带chunk ID，前端每次接收时把chunk ID和Session ID记录到localStorage",
+      "刷新后前端加载出这两个ID再向后端发请求，后端结合ID记录已推送位置继续续传",
+      "被追问多会话同时断点续传时localStorage方案的问题：想到前端有类似数据库的存储结构但想不起来（IndexedDB）",
+      "面试官提示另一方案：后端做增量合并、全量推送（JSON patch在后端拼接），前端每次拿到逐步完整的整界面，无需前后端记录续传点"
+    ],
+    "quality": "partial",
+    "quote": "那我怎么就是用SC怎么实现那种断点续传"
+  },
+  {
+    "category": "backend",
+    "question": "HTTP和HTTPS协议的区别？如果让你用Node搭建一个HTTPS服务，简述实践思路。",
+    "answer_points": [
+      "HTTPS多了加密过程，混合加密：服务器向第三方机构申请数字证书，客户端验证身份并用公钥加密自己生成的对称密钥回传，服务器用私钥解密后双方用对称密钥传数据",
+      "摘要算法：任意长度数据生成固定长度的哈希值，传输时同时发出，接收方重新计算比对，保证数据一致性防篡改",
+      "数字签名：用私钥加密、对方用公钥解密以验证身份",
+      "Node搭建HTTPS答得不好：只想到写请求逻辑，并把加密协议/key放在网关或负载均衡层，未给出具体实践步骤"
+    ],
+    "quality": "partial",
+    "quote": "描述一下HTTP跟HTTPS协议之间的区别，如果让你用node来搭建一个HTTPS服务"
+  },
+  {
+    "category": "frontend_basic",
+    "question": "Promise的主要作用是什么？解决了什么问题？如果让你实现一个Promise，你会怎么设计？",
+    "answer_points": [
+      "解决异步问题：通过resolve/reject及链式调用，把前一个请求resolve后的结果传给下一个请求，将多个异步请求串联，使异步行为可像同步一样组织",
+      "实现思路：构造函数接收resolve和reject两个参数，成功时调resolve传结果、失败时调reject传err，返回对象支持链式调用",
+      "补充需要用变量记录pending/fulfilled/rejected三种状态",
+      "面试官追问回调如何管理时答不出，面试官提示与事件总线的设计方式类似"
+    ],
+    "quality": "partial",
+    "quote": "基础知识最后一题是promise。主要作用是什么？解决了什么问题？如果让你去实现一个promise"
+  },
+  {
+    "category": "agent",
+    "question": "Agent loop跑久了上下文会衰减，这时怎么优化长上下文问题？",
+    "answer_points": [
+      "只保留最近几次聊天记录，直接删掉较老的记录",
+      "把较长的历史会话压缩成摘要，减小上下文体积",
+      "总结提炼后放入长期记忆（文件或数据库），后续通过查询获取，不堆在上下文里",
+      "文件内容、每轮生成的代码不全量记录进上下文，改为写引用记录地址，需要时按需加载",
+      "面试官提示压缩策略后联想到RAG：把历史分类整理后建索引，通过向量检索按需取回"
+    ],
+    "quality": "good",
+    "quote": "Agent loop如果跑久的话，它的上下文会衰减，那这时候我们怎么去优化这个事情呢"
+  },
+  {
+    "category": "agent",
+    "question": "实习中AI Coding的占比是多少？AI Coding的产物是如何做质量审核的？",
+    "answer_points": [
+      "基本全是AI Coding，公司有AI覆盖率指标要求，基本没有手写",
+      "质量审核：先自己拆解需求，让AI一步一步实现，每步完成后检查实现效果再进行下一步，避免全丢给AI后出问题定位不到哪一步",
+      "有时先让AI给出方案，人工确认方案后再让它执行",
+      "面试官追问是否用过 多模型交叉验证，回答没有用过"
+    ],
+    "quality": "partial",
+    "quote": "那AI Coding出来的成产物是怎么去做质量审核的呢"
+  }
+]

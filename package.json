@@ -1,0 +1,12 @@
+{
+  "name": "mianjing-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "前端秋招面经知识库：React 前端 + NestJS/LangGraph/DeepSeek 后端",
+  "scripts": {
+    "build:data": "node server/scripts/build-data.mjs",
+    "server": "cd server && npm run start:dev",
+    "web": "cd web && npm run dev",
+    "setup": "cd server && npm install && cd ../web && npm install"
+  }
+}
