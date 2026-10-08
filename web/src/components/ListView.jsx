@@ -1,92 +1,112 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { QMETA, CAT_MAP } from './constants.js';
+import React from 'react';
+import Icon, { GradeMark } from './Icon.jsx';
+import { QMETA, catOf, splitRound } from './constants.js';
 
-/** 单张题目卡片 */
-export function QCard({ item, open, onToggle, selectMode, checked, onCheck, onFlag, onResolve }) {
-  const cat = CAT_MAP[item.category];
+/** 搜索关键词高亮 */
+export function Highlight({ text, kw }) {
+  if (!kw) return text;
+  const lower = text.toLowerCase();
+  const k = kw.toLowerCase();
+  const out = [];
+  let i = 0;
+  let at;
+  while ((at = lower.indexOf(k, i)) !== -1) {
+    if (at > i) out.push(text.slice(i, at));
+    out.push(<mark key={at}>{text.slice(at, at + k.length)}</mark>);
+    i = at + k.length;
+  }
+  out.push(text.slice(i));
+  return out;
+}
+
+/** 单道题：一行题目 + 展开后的回答要点与原文 */
+export function QRow({ item, open, onToggle, selectMode, checked, onCheck, onFlag, onResolve, keyword, flash, showCompany = true }) {
+  const cat = catOf(item.category);
   const q = QMETA[item.quality];
-  // 轮次形如「9.11 一面」：拆出日期单独成标签
-  const m = String(item.round || '').match(/^(\d{1,2}\.\d{1,2}(?:\.\d{1,2})?)\s*(.*)$/);
-  const date = m ? m[1] : '';
-  const roundLabel = m ? (m[2] || '面试') : item.round;
+  const { date, round } = splitRound(item.round);
+  const headId = `qh-${item.id}`;
 
-  // 点击 ✓ 后在按钮旁弹出短提示（resolved 状态变化时触发）
-  const [hint, setHint] = useState('');
-  const prevResolved = useRef(item.resolved);
-  const hintTimer = useRef(null);
-  useEffect(() => {
-    if (prevResolved.current !== item.resolved) {
-      prevResolved.current = item.resolved;
-      if (hintTimer.current) clearTimeout(hintTimer.current);
-      setHint(item.resolved ? '已解决' : '已取消解决');
-      hintTimer.current = setTimeout(() => setHint(''), 1500);
-    }
-  }, [item.resolved]);
+  const onHeadKey = (e) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectMode ? onCheck(item.id, !checked) : onToggle(); }
+  };
 
   return (
-    <div className={`q-card ${open ? 'open' : ''} ${item.resolved ? 'resolved' : ''}`} id={`card-${item.id}`}>
-      <div className="head" onClick={onToggle}>
-        {selectMode && (
+    <li
+      id={`card-${item.id}`}
+      className={`q-row ${open ? 'open' : ''} ${item.resolved ? 'resolved' : ''} ${checked ? 'checked' : ''} ${flash ? 'flash' : ''}`}
+    >
+      <div
+        className="q-head" id={headId} role="button" tabIndex={0}
+        aria-expanded={selectMode ? undefined : open}
+        onClick={() => (selectMode ? onCheck(item.id, !checked) : onToggle())}
+        onKeyDown={onHeadKey}
+      >
+        {selectMode ? (
           <input
-            type="checkbox" className="q-check" checked={checked}
+            type="checkbox" className="q-check" checked={checked} tabIndex={-1}
+            aria-label="选择这道题"
             onClick={(e) => e.stopPropagation()}
             onChange={(e) => onCheck(item.id, e.target.checked)}
           />
+        ) : (
+          <span className="q-grade" title={q.label}><GradeMark quality={item.quality} /></span>
         )}
-        <div className="qbody">
-          <div className="qtext">{item.question}</div>
-          <div className="metarow">
-            <span className="badge cat" style={{ background: cat.color }}>{cat.label}</span>
-            <span className="badge company">{item.company} · {roundLabel}</span>
-            {date && <span className="badge time" title="面试日期">📅 {date}</span>}
-            <span className={`badge quality ${item.quality}`}>{q.label}</span>
+        <div className="q-body">
+          <div className="q-text"><Highlight text={item.question} kw={keyword} /></div>
+          <div className="q-meta">
+            <span className="q-cat"><i style={{ background: cat.color }} />{cat.label}</span>
+            {showCompany && <span>{item.company} {round}</span>}
+            {date && <span title="面试日期">{date}</span>}
+            <span className={`q-quality ${item.quality}`}>{q.label}</span>
+            {item.resolved && <span className="q-done">已解决</span>}
           </div>
         </div>
-        <div className="q-corner">
-          {hint && <span className="q-hint">{hint}</span>}
+        <Icon name="chevron" className="q-arrow" />
+      </div>
+
+      {!selectMode && (
+        <div className="q-actions">
           <button
-            className={`q-resolve ${item.resolved ? 'on' : ''}`}
-            title={item.resolved ? '取消「已解决」标记' : '标记为已解决'}
-            onClick={(e) => { e.stopPropagation(); onResolve?.(item.id); }}
+            className={`q-act resolve ${item.resolved ? 'on' : ''}`}
+            title={item.resolved ? '取消已解决' : '标记为已解决'}
+            aria-pressed={!!item.resolved}
+            onClick={() => onResolve?.(item.id)}
           >
-            ✓
+            <Icon name="check" size={15} strokeWidth={2} />
           </button>
           <button
-            className={`q-flag ${item.flagged ? 'on' : ''}`}
-            title={item.flagged ? '取消红旗标记' : '插红旗标记'}
-            onClick={(e) => { e.stopPropagation(); onFlag?.(item.id); }}
+            className={`q-act flag ${item.flagged ? 'on' : ''}`}
+            title={item.flagged ? '取消标记' : '标记为重点'}
+            aria-pressed={!!item.flagged}
+            onClick={() => onFlag?.(item.id)}
           >
-            🚩
+            <Icon name="flag" size={15} />
           </button>
         </div>
-        <span className="arrow">▶</span>
-      </div>
-      <div className="detail">
-        <div className="dtitle">回答要点</div>
-        <ul>{item.answer_points.map((p, i) => <li key={i}>{p}</li>)}</ul>
-        <div className="dtitle">原文定位</div>
-        <div className="quote">“{item.quote}”</div>
-      </div>
-    </div>
+      )}
+
+      {open && !selectMode && (
+        <div className="q-detail" role="region" aria-labelledby={headId}>
+          <h4>回答要点</h4>
+          <ol>{item.answer_points.map((p, i) => <li key={i}><Highlight text={p} kw={keyword} /></li>)}</ol>
+          <h4>面试官原话</h4>
+          <blockquote><Highlight text={item.quote} kw={keyword} /></blockquote>
+        </div>
+      )}
+    </li>
   );
 }
 
-/** 通用题目列表：支持批量选择 + 分组展示 */
+/** 题目列表：支持批量选择 + 按分类 / 按公司分组 */
 export default function ListView({
-  items,
-  grouped = false,
-  selectMode,
-  selection,
-  onToggleSelect,
-  onToggleCard,
-  openIds,
-  onToggleFlag,
-  onToggleResolve,
+  items, groupBy = null, selectMode, selection, onToggleSelect, onToggleCard, openIds,
+  onToggleFlag, onToggleResolve, keyword, flashId, showCompany = true, empty,
 }) {
-  if (!items.length) return <div className="empty">没有匹配的题目，换个关键词试试</div>;
+  if (!items.length) return empty;
 
-  const renderCard = (it) => (
-    <QCard
+  const renderRow = (it) => (
+    <QRow
       key={it.id} item={it}
       open={openIds.has(it.id)}
       onToggle={() => onToggleCard(it.id)}
@@ -95,25 +115,27 @@ export default function ListView({
       onCheck={onToggleSelect}
       onFlag={onToggleFlag}
       onResolve={onToggleResolve}
+      keyword={keyword}
+      flash={flashId === it.id}
+      showCompany={showCompany}
     />
   );
 
-  if (!grouped) return <div className="card-list">{items.map(renderCard)}</div>;
+  if (!groupBy) return <ul className="sheet">{items.map(renderRow)}</ul>;
 
-  // 按分类分组
   const groups = {};
-  for (const it of items) (groups[it.category] ||= []).push(it);
+  for (const it of items) (groups[it[groupBy]] ||= []).push(it);
   return (
-    <div>
-      {Object.entries(groups).map(([catId, list]) => (
-        <div key={catId}>
-          <div className="group-title">
-            <span className="gdot" style={{ background: CAT_MAP[catId]?.color }} />
-            {CAT_MAP[catId]?.label || catId}
-            <span className="gcount">· {list.length} 题</span>
-          </div>
-          <div className="card-list">{list.map(renderCard)}</div>
-        </div>
+    <div className="groups">
+      {Object.entries(groups).map(([key, list]) => (
+        <section key={key}>
+          <h3 className="group-title">
+            {groupBy === 'category' && <i style={{ background: catOf(key).color }} />}
+            {groupBy === 'category' ? catOf(key).label : key}
+            <span>{list.length} 题</span>
+          </h3>
+          <ul className="sheet">{list.map(renderRow)}</ul>
+        </section>
       ))}
     </div>
   );
