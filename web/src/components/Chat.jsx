@@ -37,7 +37,7 @@ const titleOf = (s) => s.title || s.msgs.find((m) => m.role === 'user')?.text.sl
  * - panel 形态：右侧滑出面板，会话列表以浮层展示
  * 后端为 NestJS + LangGraph（retrieve -> generate）+ DeepSeek，SSE 流式返回
  */
-export default function Chat({ open, onOpen, onClose, onJumpToItem, variant = 'panel' }) {
+export default function Chat({ open, onOpen, onClose, onJumpToItem, variant = 'panel', ask }) {
   const toast = useToast();
   const [{ sessions, activeId }, setState] = useState(loadSessions);
   const [listOpen, setListOpen] = useState(false);
@@ -94,18 +94,32 @@ export default function Chat({ open, onOpen, onClose, onJumpToItem, variant = 'p
     return { ...s, msgs };
   });
 
-  const send = async (text = input) => {
+  const send = (text = input) => {
     const q = text.trim();
     if (!q || busy) return;
-    const sid = session.id;
-    const history = session.msgs
+    run(session.id, q, session.msgs);
+  };
+
+  /** 外部「问 AI」：在新对话里发出（当前对话为空则直接用当前的） */
+  useEffect(() => {
+    if (!ask?.text) return;
+    if (busyId) stop();
+    if (!session.msgs.length) { run(session.id, ask.text, [], ask.title); return; }
+    const s = newSession();
+    setState((st) => ({ sessions: [s, ...st.sessions], activeId: s.id }));
+    run(s.id, ask.text, [], ask.title);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ask?.n]);
+
+  async function run(sid, q, prior, title) {
+    const history = prior
       .filter((m) => m.text && !m.error)
       .slice(-6)
       .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
     setInput('');
     setBusyId(sid);
     stick.current = true;
-    patch(sid, (s) => ({ ...s, msgs: [...s.msgs, { role: 'user', text: q }, { role: 'bot', text: '', refs: [], pending: true }] }));
+    patch(sid, (s) => ({ ...s, title: title || s.title, msgs: [...s.msgs, { role: 'user', text: q }, { role: 'bot', text: '', refs: [], pending: true }] }));
 
     const ctrl = new AbortController();
     abortRef.current = ctrl;
@@ -120,10 +134,10 @@ export default function Chat({ open, onOpen, onClose, onJumpToItem, variant = 'p
       else patchLastBot(sid, (m) => ({ ...m, text: e.message, error: true }));
     } finally {
       patchLastBot(sid, (m) => ({ ...m, pending: false }));
-      abortRef.current = null;
+      if (abortRef.current === ctrl) abortRef.current = null;
       setBusyId((cur) => (cur === sid ? null : cur));
     }
-  };
+  }
 
   const stop = () => abortRef.current?.abort();
 

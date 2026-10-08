@@ -1,16 +1,30 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  fetchStats, fetchAllItems, deleteItems, deleteInterview, toggleFlag, toggleResolve, setInterviewStatus,
+  fetchStats, fetchAllItems, deleteItems, deleteInterview, toggleFlag, toggleResolve, setInterviewStatus, saveNote,
 } from './api.js';
 import Sidebar from './components/Sidebar.jsx';
 import ItemsView from './components/ItemsView.jsx';
 import Chat from './components/Chat.jsx';
 import ImportDialog from './components/ImportDialog.jsx';
 import Dashboard from './components/Dashboard.jsx';
-import ConfirmDialog from './components/ConfirmDialog.jsx';
+import ConfirmDialog, { Modal } from './components/ConfirmDialog.jsx';
+import ReviewMode from './components/ReviewMode.jsx';
 import Icon from './components/Icon.jsx';
 import { useToast } from './components/Toast.jsx';
-import { catOf, setCategories, findFreqGroups, viewFromHash, hashFromView } from './components/constants.js';
+import { QMETA, catOf, setCategories, findFreqGroups, viewFromHash, hashFromView } from './components/constants.js';
+
+const SHORTCUTS = [
+  ['/', '搜索题目'],
+  ['j / k', '在列表里上下移动'],
+  ['Enter', '展开 / 收起当前题'],
+  ['e', '标记 / 取消已解决'],
+  ['f', '标记 / 取消重点'],
+  ['a', '问 AI 当前这道题'],
+  ['空格', '复习模式：显示答案'],
+  ['1 / 2', '复习模式：还不会 / 会了'],
+  ['Esc', '关闭弹窗、面板或复习'],
+  ['?', '打开这个列表'],
+];
 
 const titleOfView = (v) =>
   v.type === 'chat' ? '问答助手'
@@ -34,6 +48,9 @@ export default function App() {
   const [importOpen, setImportOpen] = useState(false);
   const [delCompany, setDelCompany] = useState(null);
   const [delBusy, setDelBusy] = useState(false);
+  const [review, setReview] = useState(null); // { items, title }
+  const [ask, setAsk] = useState(null);       // { text, title, n }
+  const [helpOpen, setHelpOpen] = useState(false);
   const mainRef = useRef(null);
   const nonce = useRef(0);
 
@@ -85,7 +102,10 @@ export default function App() {
     try {
       const r = await api(id);
       setTo(r[field]);
-      if (field === 'resolved' && r[field]) {
+      if (field === 'resolved') {
+        setAllItems((items) => items.map((i) => (i.id === id ? { ...i, resolvedAt: r.resolvedAt } : i)));
+      }
+      if (field === 'resolved' && r[field] && !document.querySelector('.review')) {
         toast('已标记为已解决', { tone: 'good', action: { label: '撤销', onClick: () => run(id) } });
       }
     } catch (e) {
@@ -95,6 +115,52 @@ export default function App() {
   };
   const handleToggleResolve = toggleField('resolved', toggleResolve, '标记');
   const handleToggleFlag = toggleField('flagged', toggleFlag, '标记');
+
+  /** 设为指定状态（复习模式用），已经是目标状态就不发请求 */
+  const setResolved = (id, val) => {
+    const cur = itemsRef.current.find((i) => i.id === id);
+    if (cur && !!cur.resolved !== val) handleToggleResolve(id);
+  };
+
+  const handleSaveNote = async (id, note) => {
+    try {
+      const r = await saveNote(id, note);
+      setAllItems((items) => items.map((i) => (i.id === id ? { ...i, note: r.note || undefined } : i)));
+      return true;
+    } catch (e) {
+      toast(`保存订正失败：${e.message}`, { tone: 'error' });
+      return false;
+    }
+  };
+
+  /** 针对某道题问 AI：打开问答面板，在新对话里发出 */
+  const askAbout = (item) => {
+    const lines = [
+      `这道面试题我当时${QMETA[item.quality].label}，请帮我给出一个更完整、适合面试口述的回答，并指出我漏掉的关键点。`,
+      `题目：${item.question}`,
+      `我当时答到的点：${item.answer_points.join('；')}`,
+    ];
+    if (item.note) lines.push(`我自己的订正：${item.note}`);
+    setReview(null);
+    if (viewRef.current.type !== 'chat') setChatOpen(true);
+    setAsk({ text: lines.join('\n'), title: item.question.slice(0, 24), n: Date.now() });
+  };
+
+  const startReview = (items, title) => {
+    if (!items.length) return;
+    setChatOpen(false);
+    setReview({ items, title });
+  };
+
+  // 全局快捷键：? 打开快捷键列表
+  useEffect(() => {
+    const h = (e) => {
+      if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) return;
+      if (e.key === '?') { e.preventDefault(); setHelpOpen((v) => !v); }
+    };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, []);
 
   const handleDeleteItems = async (ids) => {
     try {
@@ -177,6 +243,7 @@ export default function App() {
         onNavigate={navigate}
         onOpenImport={() => setImportOpen(true)}
         onJumpToItem={gotoItem}
+        onStartReview={startReview}
       />
     );
   } else if (!isChatPage) {
@@ -190,6 +257,9 @@ export default function App() {
         onDeleteItems={handleDeleteItems}
         onSetStatus={handleSetStatus}
         onJumpToItem={gotoItem}
+        onSaveNote={handleSaveNote}
+        onAsk={askAbout}
+        onStartReview={startReview}
       />
     );
   }
@@ -203,6 +273,7 @@ export default function App() {
         onNavigate={navigate}
         onDeleteCompany={setDelCompany}
         onClose={() => setNavOpen(false)}
+        onShowShortcuts={() => setHelpOpen(true)}
       />
 
       <main className="main" id="main" ref={mainRef}>
@@ -219,7 +290,28 @@ export default function App() {
         onOpen={() => setChatOpen(true)}
         onClose={() => (isChatPage ? navigate({ type: 'home' }) : setChatOpen(false))}
         onJumpToItem={gotoItem}
+        ask={ask}
       />
+
+      {review && (
+        <ReviewMode
+          items={review.items}
+          title={review.title}
+          liveItems={allItems}
+          onSetResolved={setResolved}
+          onToggleFlag={handleToggleFlag}
+          onAsk={askAbout}
+          onClose={() => setReview(null)}
+        />
+      )}
+
+      <Modal open={helpOpen} title="快捷键" onClose={() => setHelpOpen(false)} className="help-modal">
+        <dl className="shortcuts">
+          {SHORTCUTS.map(([k, d]) => (
+            <div key={k}><dt>{k.split(' / ').map((x, i) => <React.Fragment key={x}>{i > 0 && ' / '}<kbd>{x}</kbd></React.Fragment>)}</dt><dd>{d}</dd></div>
+          ))}
+        </dl>
+      </Modal>
 
       <ImportDialog
         open={importOpen}

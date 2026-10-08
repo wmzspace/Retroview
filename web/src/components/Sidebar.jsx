@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Icon from './Icon.jsx';
 import { CATEGORIES, INTERVIEW_STATUS, splitRound } from './constants.js';
 
@@ -10,8 +10,44 @@ function NavItem({ active, onClick, children }) {
   );
 }
 
+const THEMES = [
+  { id: 'light', icon: 'sun', label: '浅色' },
+  { id: 'system', icon: 'monitor', label: '跟随系统' },
+  { id: 'dark', icon: 'moon', label: '深色' },
+];
+
+/** 主题：写到 <html data-theme>，system 时移除属性交给媒体查询 */
+export function applyTheme(t) {
+  if (t === 'system') delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = t;
+}
+function readTheme() {
+  try { return localStorage.getItem('mianjing.theme') || 'system'; } catch { return 'system'; }
+}
+
+function ThemeSwitch() {
+  const [theme, setTheme] = useState(readTheme);
+  const pick = (t) => {
+    setTheme(t);
+    applyTheme(t);
+    try { localStorage.setItem('mianjing.theme', t); } catch { /* ignore */ }
+  };
+  return (
+    <div className="theme-switch" role="radiogroup" aria-label="外观">
+      {THEMES.map((t) => (
+        <button
+          key={t.id} role="radio" aria-checked={theme === t.id} title={t.label}
+          className={theme === t.id ? 'on' : ''} onClick={() => pick(t.id)}
+        >
+          <Icon name={t.icon} size={14} /><span className="sr-only">{t.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /** 侧栏导航；移动端作为抽屉使用（open 控制） */
-export default function Sidebar({ stats, allItems, view, open, onNavigate, onDeleteCompany, onClose }) {
+export default function Sidebar({ stats, allItems, view, open, onNavigate, onDeleteCompany, onClose, onShowShortcuts }) {
   const go = (v) => { onNavigate(v); onClose?.(); };
   const is = (type, key) =>
     view.type === type && (key === undefined || view.id === key || view.company === key);
@@ -89,6 +125,13 @@ export default function Sidebar({ stats, allItems, view, open, onNavigate, onDel
             );
           })}
         </nav>
+
+        <div className="side-foot">
+          <button className="btn ghost sm" onClick={onShowShortcuts} title="快捷键（?）">
+            <Icon name="keyboard" size={14} />快捷键
+          </button>
+          <ThemeSwitch />
+        </div>
       </aside>
     </>
   );

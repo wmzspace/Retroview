@@ -9,7 +9,7 @@ const QORDER = { poor: 0, partial: 1, good: 2 };
  */
 export default function Dashboard({
   stats, allItems, freqGroups,
-  onNavigate, onOpenImport, onJumpToItem,
+  onNavigate, onOpenImport, onJumpToItem, onStartReview,
 }) {
   const total = allItems.length;
   if (!total) {
@@ -30,10 +30,12 @@ export default function Dashboard({
   const weakTotal = byQ.partial + byQ.poor;
   const weakLeft = weakTotal - resolvedByQ.partial - resolvedByQ.poor;
 
-  const queue = allItems
+  const pending = allItems
     .filter((i) => i.quality !== 'good' && !i.resolved)
-    .sort((a, b) => (b.flagged ? 1 : 0) - (a.flagged ? 1 : 0) || QORDER[a.quality] - QORDER[b.quality])
-    .slice(0, 8);
+    .sort((a, b) => (b.flagged ? 1 : 0) - (a.flagged ? 1 : 0) || QORDER[a.quality] - QORDER[b.quality]);
+  const queue = pending.slice(0, 7);
+  const weekAgo = Date.now() - 7 * 864e5;
+  const thisWeek = allItems.filter((i) => i.resolved && i.resolvedAt > weekAgo).length;
 
   const catRows = CATEGORIES
     .map((c) => {
@@ -65,6 +67,7 @@ export default function Dashboard({
             {weakLeft > 0
               ? <>{total} 道题里，还有 <b>{weakLeft}</b> 道没答好的题没解决。</>
               : <>{total} 道题里没答好的都已解决，可以换着复习答得不错的题。</>}
+            {thisWeek > 0 && <span className="lede-week">这周解决了 {thisWeek} 道</span>}
           </p>
         </div>
         <div className="dash-actions">
@@ -99,6 +102,12 @@ export default function Dashboard({
               全部待加强（{weakTotal}）
             </button>
           </div>
+          {pending.length > 0 && (
+            <button className="review-start" onClick={() => onStartReview(pending, '待加强的题')}>
+              <Icon name="play" size={16} />
+              <span><b>开始复习</b>逐题自测 {pending.length} 道没解决的题，会了就划掉</span>
+            </button>
+          )}
           {queue.length ? (
             <ul className="queue">
               {queue.map((it) => (
@@ -117,51 +126,53 @@ export default function Dashboard({
           ) : <p className="panel-empty">没答好的题都已解决。</p>}
         </section>
 
-        {/* ===== 高频考点 ===== */}
-        <section className="panel">
-          <div className="panel-head">
-            <h3>多家公司都问过</h3>
-            <span className="muted">优先准备</span>
-          </div>
-          {freqGroups.length ? (
-            <ul className="queue">
-              {freqGroups.slice(0, 8).map((g) => {
-                const comps = [...new Set(g.map((x) => x.company))];
-                return (
-                  <li key={g[0].id}>
-                    <button onClick={() => onJumpToItem(g[0])}>
-                      <span className="freq-n">{g.length}</span>
-                      <span className="qq">{g[0].question}</span>
-                      <span className="qc">{comps.slice(0, 3).join('、')}{comps.length > 3 ? ' 等' : ''}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : <p className="panel-empty">暂时没有重复出现的题。</p>}
-        </section>
-      </div>
+        <div className="dash-stack">
+          {/* ===== 高频考点 ===== */}
+          <section className="panel">
+            <div className="panel-head">
+              <h3>多家公司都问过</h3>
+              <span className="muted">优先准备</span>
+            </div>
+            {freqGroups.length ? (
+              <ul className="queue">
+                {freqGroups.slice(0, 8).map((g) => {
+                  const comps = [...new Set(g.map((x) => x.company))];
+                  return (
+                    <li key={g[0].id}>
+                      <button onClick={() => onJumpToItem(g[0])}>
+                        <span className="freq-n">{g.length}</span>
+                        <span className="qq">{g[0].question}</span>
+                        <span className="qc">{comps.slice(0, 3).join('、')}{comps.length > 3 ? ' 等' : ''}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : <p className="panel-empty">暂时没有重复出现的题。</p>}
+          </section>
 
-      <div className="dash-cols">
-        {/* ===== 分类分布 ===== */}
-        <section className="panel">
-          <div className="panel-head"><h3>按知识分类</h3><span className="muted">条长为题数，深色为答得不错</span></div>
-          <ul className="cat-bars">
-            {catRows.map((c) => (
-              <li key={c.id}>
-                <button onClick={() => onNavigate({ type: 'category', id: c.id })} title={c.desc}>
-                  <span className="cb-label">{c.label}</span>
-                  <span className="cb-track">
-                    <span className="cb-fill" style={{ width: `${(c.n / maxCat) * 100}%`, background: c.color }}>
-                      <span className="cb-good" style={{ width: `${(c.good / c.n) * 100}%` }} />
+          {/* ===== 分类分布 ===== */}
+          <section className="panel">
+            <div className="panel-head"><h3>按知识分类</h3><span className="muted">条长为题数，深色为答得不错</span></div>
+            <ul className="cat-bars">
+              {catRows.map((c) => (
+                <li key={c.id}>
+                  <button onClick={() => onNavigate({ type: 'category', id: c.id })} title={c.desc}>
+                    <span className="cb-label">{c.label}</span>
+                    <span className="cb-track">
+                      <span className="cb-fill" style={{ width: `${(c.n / maxCat) * 100}%`, background: c.color }}>
+                        <span className="cb-good" style={{ width: `${(c.good / c.n) * 100}%` }} />
+                      </span>
                     </span>
-                  </span>
-                  <span className="cb-count">{c.n}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
+                    <span className="cb-count">{c.n}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+        </div>
+      </div>
 
         {/* ===== 面试场次 ===== */}
         <section className="panel">
@@ -189,7 +200,6 @@ export default function Dashboard({
             </tbody>
           </table>
         </section>
-      </div>
     </div>
   );
 }

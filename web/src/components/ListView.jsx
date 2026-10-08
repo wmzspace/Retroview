@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Icon, { GradeMark } from './Icon.jsx';
 import { QMETA, catOf, splitRound } from './constants.js';
 
@@ -19,8 +19,47 @@ export function Highlight({ text, kw }) {
   return out;
 }
 
+/** 订正笔记：失焦或 Ctrl/⌘+Enter 保存 */
+function NoteEditor({ item, onSave }) {
+  const [value, setValue] = useState(item.note || '');
+  const [state, setState] = useState('idle'); // idle | saving | saved | error
+  const saved = useRef(item.note || '');
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.max(64, el.scrollHeight)}px`;
+  }, [value]);
+
+  const save = async () => {
+    if (value.trim() === saved.current.trim()) return;
+    setState('saving');
+    const ok = await onSave(item.id, value);
+    if (ok) { saved.current = value; setState('saved'); setTimeout(() => setState('idle'), 1500); }
+    else setState('error');
+  };
+
+  return (
+    <div className="note">
+      <textarea
+        ref={ref} value={value}
+        placeholder="写下更好的答法、补充的知识点、下次要注意的地方……"
+        aria-label="我的订正"
+        onChange={(e) => { setValue(e.target.value); setState('idle'); }}
+        onBlur={save}
+        onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); save(); } }}
+      />
+      <span className={`note-state ${state}`}>
+        {state === 'saving' ? '保存中…' : state === 'saved' ? '已保存' : state === 'error' ? '保存失败，失焦后重试' : '失焦自动保存'}
+      </span>
+    </div>
+  );
+}
+
 /** 单道题：一行题目 + 展开后的回答要点与原文 */
-export function QRow({ item, open, onToggle, selectMode, checked, onCheck, onFlag, onResolve, keyword, flash, showCompany = true }) {
+export function QRow({ item, open, onToggle, selectMode, checked, onCheck, onFlag, onResolve, onSaveNote, onAsk, keyword, flash, showCompany = true }) {
   const cat = catOf(item.category);
   const q = QMETA[item.quality];
   const { date, round } = splitRound(item.round);
@@ -33,7 +72,7 @@ export function QRow({ item, open, onToggle, selectMode, checked, onCheck, onFla
 
   return (
     <li
-      id={`card-${item.id}`}
+      id={`card-${item.id}`} data-id={item.id}
       className={`q-row ${open ? 'open' : ''} ${item.resolved ? 'resolved' : ''} ${checked ? 'checked' : ''} ${flash ? 'flash' : ''}`}
     >
       <div
@@ -59,6 +98,7 @@ export function QRow({ item, open, onToggle, selectMode, checked, onCheck, onFla
             {showCompany && <span>{item.company} {round}</span>}
             {date && <span title="面试日期">{date}</span>}
             <span className={`q-quality ${item.quality}`}>{q.label}</span>
+            {item.note && <span className="q-has-note"><Icon name="note" size={12} />有订正</span>}
             {item.resolved && <span className="q-done">已解决</span>}
           </div>
         </div>
@@ -92,6 +132,11 @@ export function QRow({ item, open, onToggle, selectMode, checked, onCheck, onFla
           <ol>{item.answer_points.map((p, i) => <li key={i}><Highlight text={p} kw={keyword} /></li>)}</ol>
           <h4>面试官原话</h4>
           <blockquote><Highlight text={item.quote} kw={keyword} /></blockquote>
+          <h4>我的订正</h4>
+          <NoteEditor item={item} onSave={onSaveNote} />
+          <div className="q-detail-actions">
+            <button className="btn sm" onClick={() => onAsk?.(item)}><Icon name="chat" size={14} />问 AI 怎么答更好</button>
+          </div>
         </div>
       )}
     </li>
@@ -101,7 +146,7 @@ export function QRow({ item, open, onToggle, selectMode, checked, onCheck, onFla
 /** 题目列表：支持批量选择 + 按分类 / 按公司分组 */
 export default function ListView({
   items, groupBy = null, selectMode, selection, onToggleSelect, onToggleCard, openIds,
-  onToggleFlag, onToggleResolve, keyword, flashId, showCompany = true, empty,
+  onToggleFlag, onToggleResolve, onSaveNote, onAsk, keyword, flashId, showCompany = true, empty,
 }) {
   if (!items.length) return empty;
 
@@ -115,6 +160,8 @@ export default function ListView({
       onCheck={onToggleSelect}
       onFlag={onToggleFlag}
       onResolve={onToggleResolve}
+      onSaveNote={onSaveNote}
+      onAsk={onAsk}
       keyword={keyword}
       flash={flashId === it.id}
       showCompany={showCompany}

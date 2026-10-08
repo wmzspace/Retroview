@@ -83,3 +83,7 @@ export async function chatStream({ message, history, signal }, handlers) {
     }
   }
 }
+
+/** 保存订正笔记（空字符串清除），返回 { ok, note } */
+export const saveNote = (id, note) =>
+  req(`/api/items/${enc(id)}/note`, { method: 'POST', body: json({ note }) });
